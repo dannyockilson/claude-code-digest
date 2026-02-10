@@ -243,16 +243,21 @@ def collect_community_repos(sources: list, db) -> list:
 def collect_reddit(sources: list, db) -> list:
     """Collect top weekly posts from configured subreddits."""
     items = []
-    headers = {"User-Agent": "claude-digest/1.0"}
+    # Reddit blocks generic/short user-agents and datacenter IPs aggressively.
+    # Use a browser-like UA and old.reddit.com which is more tolerant.
+    headers = {
+        "User-Agent": "Mozilla/5.0 (compatible; claude-code-digest/1.0; +https://github.com/dannyockilson/claude-code-digest)",
+        "Accept": "application/json",
+    }
     for src in sources:
         subreddit = src["subreddit"]
         category = src["category"]
         min_score = src.get("min_score", 0)
         try:
             resp = requests.get(
-                f"https://www.reddit.com/r/{subreddit}/top.json",
+                f"https://old.reddit.com/r/{subreddit}/top.json",
                 headers=headers,
-                params={"t": "week", "limit": 25},
+                params={"t": "week", "limit": 25, "raw_json": 1},
                 timeout=15,
             )
             resp.raise_for_status()
@@ -486,6 +491,19 @@ def main() -> int:
     if source_errors >= total_sources:
         logger.error("ALL source collectors failed. Aborting.")
         return 1
+
+    # Deduplicate items by ID (overlapping topic searches can surface the same repo)
+    seen_ids = set()
+    deduped = []
+    for item in all_items:
+        if item["id"] not in seen_ids:
+            seen_ids.add(item["id"])
+            deduped.append(item)
+        else:
+            logger.debug("Deduped collected item: %s", item["title"])
+    if len(deduped) < len(all_items):
+        logger.info("Deduped %d duplicate items from collection", len(all_items) - len(deduped))
+    all_items = deduped
 
     # Extract content for items that only have URLs
     all_items = extract_content_for_items(all_items)

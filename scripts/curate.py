@@ -1,6 +1,7 @@
 """Curation: summarize, score, filter, compute star velocity, and produce editorial digest."""
 
 import json
+import re
 import sys
 import time
 from datetime import datetime, timedelta, timezone
@@ -21,6 +22,16 @@ from config import (
     load_sources,
     logger,
 )
+
+
+def parse_json_response(text: str) -> dict:
+    """Parse JSON from Claude response, stripping markdown code fences if present."""
+    cleaned = text.strip()
+    # Strip ```json ... ``` or ``` ... ``` wrappers
+    match = re.search(r"```(?:json)?\s*\n?(.*?)\n?\s*```", cleaned, re.DOTALL)
+    if match:
+        cleaned = match.group(1).strip()
+    return json.loads(cleaned)
 
 
 def build_summarize_message(item: dict, system_prompt: str) -> dict:
@@ -50,9 +61,14 @@ def summarize_batch(client: anthropic.Anthropic, items: list, system_prompt: str
     if not items:
         return {}
 
-    # Build batch requests
+    # Build batch requests, deduplicating by item ID
     requests_list = []
+    seen_ids = set()
     for item in items:
+        if item["id"] in seen_ids:
+            logger.warning("Skipping duplicate item in batch: %s", item["title"])
+            continue
+        seen_ids.add(item["id"])
         msg_params = build_summarize_message(item, system_prompt)
         requests_list.append({
             "custom_id": item["id"],
@@ -86,7 +102,7 @@ def summarize_batch(client: anthropic.Anthropic, items: list, system_prompt: str
             if result.result.type == "succeeded":
                 try:
                     text = result.result.message.content[0].text
-                    parsed = json.loads(text)
+                    parsed = parse_json_response(text)
                     results[custom_id] = parsed
                 except (json.JSONDecodeError, IndexError, KeyError) as e:
                     logger.warning("Failed to parse batch result for %s: %s", custom_id, e)
@@ -109,7 +125,7 @@ def summarize_sequential(client: anthropic.Anthropic, items: list, system_prompt
             msg_params = build_summarize_message(item, system_prompt)
             response = client.messages.create(**msg_params)
             text = response.content[0].text
-            parsed = json.loads(text)
+            parsed = parse_json_response(text)
             results[item["id"]] = parsed
         except Exception as e:
             logger.warning("Sequential summarize failed for %s: %s", item["id"], e)
