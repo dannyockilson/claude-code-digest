@@ -19,7 +19,7 @@ from config import (
     logger,
 )
 
-PAGES_BASE_URL = f"https://{REPO_OWNER}.github.io/claude-digest"
+PAGES_BASE_URL = f"https://{REPO_OWNER}.github.io/claude-code-digest"
 
 
 def generate_digest_page(digest: dict) -> Path:

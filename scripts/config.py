@@ -24,7 +24,7 @@ CURATED_DIGEST_PATH = ROOT_DIR / "curated_digest.json"
 GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN", "")
 GITHUB_API_BASE = "https://api.github.com"
 REPO_OWNER = "dannyockilson"
-REPO_NAME = "claude-digest"
+REPO_NAME = "claude-code-digest"
 
 # Claude API
 ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", "")

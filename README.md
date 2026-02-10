@@ -21,14 +21,14 @@ Automated weekly digest of Claude Code ecosystem updates, community tools, and r
 
 ```bash
 # Add to shell profile
-alias inbox='gh issue create --repo dannyockilson/claude-digest --label inbox --title'
+alias inbox='gh issue create --repo dannyockilson/claude-code-digest --label inbox --title'
 
 # Usage:
 inbox "https://github.com/cool/tool"
 inbox "Research: Claude Code agent teams pattern"
 
 # With notes:
-gh issue create --repo dannyockilson/claude-digest --label inbox \
+gh issue create --repo dannyockilson/claude-code-digest --label inbox \
   --title "https://example.com/post" \
   --body "Interesting approach to multi-agent workflows"
 ```
