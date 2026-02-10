@@ -1,6 +1,7 @@
 """Publishing: generate digest page, update index, close inbox issues, update state."""
 
 import json
+import re
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -22,6 +23,30 @@ from config import (
 PAGES_BASE_URL = f"https://{REPO_OWNER}.github.io/claude-code-digest"
 
 
+_TOC_BLOCK = """\
+## Contents
+{: .no_toc }
+
+* TOC
+{:toc}
+"""
+
+
+def _inject_toc(markdown: str) -> str:
+    """Insert a kramdown table-of-contents block after the first ``---`` rule."""
+    # Only inject if there are section headings to navigate
+    if not re.search(r"^## ", markdown, re.MULTILINE):
+        return markdown
+
+    # Insert after the first horizontal rule (which follows the highlights)
+    idx = markdown.find("\n---\n")
+    if idx == -1:
+        return _TOC_BLOCK + "\n" + markdown
+
+    insert_pos = idx + len("\n---\n")
+    return markdown[:insert_pos] + "\n" + _TOC_BLOCK + "\n" + markdown[insert_pos:]
+
+
 def generate_digest_page(digest: dict) -> Path:
     """Write the digest markdown file with Jekyll front matter."""
     date = digest["date"]
@@ -36,7 +61,8 @@ items: {digest['items_included']}
 ---
 
 """
-    content = front_matter + digest["digest_markdown"]
+    body = _inject_toc(digest["digest_markdown"])
+    content = front_matter + body
 
     DIGESTS_DIR.mkdir(parents=True, exist_ok=True)
     out_path = DIGESTS_DIR / f"{date}.md"
