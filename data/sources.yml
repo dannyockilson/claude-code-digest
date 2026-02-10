@@ -1,0 +1,108 @@
+github_releases:
+  # Core Anthropic repos
+  - owner: anthropics
+    repo: claude-code
+    category: "Claude Code Core"
+  - owner: anthropics
+    repo: anthropic-sdk-python
+    category: "SDKs"
+  - owner: anthropics
+    repo: anthropic-sdk-typescript
+    category: "SDKs"
+  - owner: anthropics
+    repo: skills
+    category: "Skills & Plugins"
+  - owner: anthropics
+    repo: claude-agent-sdk-python
+    category: "Agent SDK"
+  - owner: anthropics
+    repo: claude-agent-sdk-typescript
+    category: "Agent SDK"
+  - owner: anthropics
+    repo: claude-code-action
+    category: "CI/CD"
+  # MCP ecosystem
+  - owner: modelcontextprotocol
+    repo: servers
+    category: "MCP"
+  - owner: modelcontextprotocol
+    repo: specification
+    category: "MCP"
+  - owner: modelcontextprotocol
+    repo: python-sdk
+    category: "MCP"
+  - owner: modelcontextprotocol
+    repo: typescript-sdk
+    category: "MCP"
+
+npm_packages:
+  - name: "@anthropic-ai/sdk"
+    category: "SDKs"
+  - name: "@anthropic-ai/claude-code"
+    category: "Claude Code Core"
+  - name: "@modelcontextprotocol/sdk"
+    category: "MCP"
+
+rss_feeds:
+  - url: "https://www.anthropic.com/rss.xml"
+    category: "Anthropic Official"
+  - url: "https://www.pulsemcp.com/rss.xml"
+    category: "MCP Community"
+
+github_topics:
+  - topic: claude-code
+    category: "Community Tools"
+  - topic: mcp-server
+    category: "MCP"
+  - topic: claude-mcp
+    category: "MCP"
+  - topic: anthropic-claude
+    category: "Community Tools"
+
+community_repos:
+  - owner: hesreallyhim
+    repo: awesome-claude-code
+    category: "Community Tools"
+  - owner: jqueryscript
+    repo: awesome-claude-code
+    category: "Community Tools"
+
+reddit:
+  - subreddit: ClaudeAI
+    category: "Community Highlights"
+    min_score: 50
+  - subreddit: ClaudeCode
+    category: "Community Highlights"
+    min_score: 20
+
+docs_monitoring:
+  - url: "https://docs.anthropic.com/en/docs/about-claude/models"
+    label: "Anthropic Models Docs"
+    category: "Docs Changes"
+  - url: "https://code.claude.com/docs/en/overview"
+    label: "Claude Code Overview"
+    category: "Docs Changes"
+  - url: "https://code.claude.com/docs/en/claude-code-reference"
+    label: "Claude Code Reference"
+    category: "Docs Changes"
+  - url: "https://code.claude.com/docs/en/hooks-guide"
+    label: "Claude Code Hooks Guide"
+    category: "Docs Changes"
+  - url: "https://code.claude.com/docs/en/github-actions"
+    label: "Claude Code GitHub Actions"
+    category: "Docs Changes"
+  - url: "https://code.claude.com/docs/en/mcp"
+    label: "Claude Code MCP"
+    category: "Docs Changes"
+  - url: "https://modelcontextprotocol.io/specification"
+    label: "MCP Specification"
+    category: "Docs Changes"
+
+star_velocity:
+  - owner: claude-did-this
+    repo: claude-squad
+  - owner: obra
+    repo: superpowers
+  - owner: anthropics
+    repo: courses
+  trending_threshold: 500

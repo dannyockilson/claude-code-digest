@@ -1,0 +1,5 @@
+__pycache__/
+*.pyc
+collected_items.json
+curated_digest.json
+.env

@@ -1,0 +1,31 @@
+name: "\U0001F4E5 Digest Inbox"
+description: "Add a URL or topic for research in the next digest"
+labels: ["inbox"]
+body:
+  - type: input
+    id: url
+    attributes:
+      label: URL
+      description: "Link to the resource (optional if providing a topic)"
+      placeholder: "https://..."
+    validations:
+      required: false
+  - type: textarea
+    id: notes
+    attributes:
+      label: Notes
+      description: "Why is this interesting? Any specific aspects to research?"
+      placeholder: "Saw this on Twitter — looks like a new approach to agent orchestration..."
+    validations:
+      required: false
+  - type: dropdown
+    id: type
+    attributes:
+      label: Type
+      options:
+        - URL / Article
+        - GitHub Repository
+        - Topic to Research
+        - Tool / Plugin
+    validations:
+      required: true
