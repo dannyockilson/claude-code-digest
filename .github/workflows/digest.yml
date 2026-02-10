@@ -39,13 +39,13 @@ jobs:
         run: python scripts/curate.py
 
       - name: Publish digest
-        if: ${{ !inputs.dry_run }}
+        if: ${{ github.event_name == 'schedule' || !inputs.dry_run }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: python scripts/publish.py
 
       - name: Commit and push
-        if: ${{ !inputs.dry_run }}
+        if: ${{ github.event_name == 'schedule' || !inputs.dry_run }}
         run: |
           git config user.name "digest-bot"
           git config user.email "digest-bot@users.noreply.github.com"
