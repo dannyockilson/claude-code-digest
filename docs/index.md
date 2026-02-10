@@ -9,8 +9,8 @@ Automated weekly digest of Claude Code ecosystem updates, community tools, and r
 
 ## Latest Digest
 
-_No digests generated yet. Run the workflow to generate the first one._
+**[10 Feb 2026](digests/2026-02-10)** — View the latest digest.
 
 ## Archive
 
-_Archive will appear here after the first digest is published._
+- [10 Feb 2026](digests/2026-02-10)
