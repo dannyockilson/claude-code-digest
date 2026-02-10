@@ -105,4 +105,4 @@ star_velocity:
     repo: superpowers
   - owner: anthropics
     repo: courses
-  trending_threshold: 500
+    trending_threshold: 500
