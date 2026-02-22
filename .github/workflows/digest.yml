@@ -2,7 +2,7 @@ name: Weekly Digest
 
 on:
   schedule:
-    - cron: '0 9 * * 1'  # Monday 9 AM UTC
+    - cron: '0 9 * * 0'  # Sunday 9 AM UTC
   workflow_dispatch:
     inputs:
       dry_run:
@@ -14,6 +14,7 @@ permissions:
   contents: write
   issues: write
   pages: write
+  pull-requests: write
 
 jobs:
   generate-digest:
@@ -44,11 +45,21 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: python scripts/publish.py
 
-      - name: Commit and push
+      - name: Open pull request
         if: ${{ github.event_name == 'schedule' || !inputs.dry_run }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          BRANCH="digest/$(date +%Y-%m-%d)"
           git config user.name "digest-bot"
           git config user.email "digest-bot@users.noreply.github.com"
+          git checkout -b "$BRANCH"
           git add -A
-          git diff --cached --quiet || git commit -m "digest: $(date +%Y-%m-%d)"
-          git push
+          git diff --cached --quiet && echo "Nothing to commit" && exit 0
+          git commit -m "digest: $(date +%Y-%m-%d)"
+          git push origin "$BRANCH"
+          gh pr create \
+            --title "digest: $(date +%Y-%m-%d)" \
+            --body "Weekly digest for $(date +%Y-%m-%d). Review and merge to publish to GitHub Pages." \
+            --base primary \
+            --head "$BRANCH"
