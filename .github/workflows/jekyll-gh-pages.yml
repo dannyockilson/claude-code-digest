@@ -1,6 +1,8 @@
 name: Deploy Jekyll with GitHub Pages dependencies preinstalled
 
 on:
+  schedule:
+    - cron: '0 9 * * 1'  # Monday 9 AM UTC
   push:
     branches: ["primary"]
   workflow_dispatch:
