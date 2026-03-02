@@ -1,0 +1,48 @@
+name: Backfill Inbox Issues
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+
+jobs:
+  backfill:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: primary
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run inbox backfill
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: python scripts/backfill_inbox.py
+
+      - name: Open pull request with updated digests
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          BRANCH="inbox-backfill/$(date +%Y-%m-%d)"
+          git config user.name "digest-bot"
+          git config user.email "digest-bot@users.noreply.github.com"
+          git checkout -b "$BRANCH"
+          git add data/state.db docs/digests/
+          git diff --cached --quiet && echo "Nothing to commit — no open inbox issues found" && exit 0
+          git commit -m "chore: backfill inbox issues $(date +%Y-%m-%d)"
+          git push origin "$BRANCH"
+          gh pr create \
+            --title "Inbox backfill $(date +%Y-%m-%d)" \
+            --body "Backfilled open inbox issues into existing digest pages. Review injected sections and merge to publish." \
+            --base primary \
+            --head "$BRANCH"
