@@ -6,6 +6,8 @@ import sys
 import time
 from datetime import datetime, timedelta, timezone
 
+import re
+
 import feedparser
 import requests
 import trafilatura
@@ -393,6 +395,36 @@ def collect_star_snapshots(sources_cfg: dict, db) -> None:
     db.commit()
 
 
+def _parse_inbox_body(body: str) -> tuple[str, str]:
+    """Extract (resource_url, notes) from a structured inbox issue body.
+
+    The inbox issue template produces bodies in this format:
+
+        ### URL
+        https://example.com
+
+        ### Notes
+        Some context here
+
+        ### Type
+        URL / Article
+    """
+    resource_url = ""
+    notes = body or ""
+
+    url_match = re.search(r"### URL\s*\n+([^\n#]+)", notes)
+    if url_match:
+        candidate = url_match.group(1).strip()
+        if candidate.startswith("http"):
+            resource_url = candidate
+
+    notes_match = re.search(r"### Notes\s*\n+(.*?)(?=\n### |\Z)", notes, re.DOTALL)
+    if notes_match:
+        notes = notes_match.group(1).strip()
+
+    return resource_url, notes
+
+
 def collect_inbox_issues(db) -> list:
     """Collect open GitHub issues labelled 'inbox'."""
     items = []
@@ -408,9 +440,15 @@ def collect_inbox_issues(db) -> list:
         for issue in resp.json():
             title = issue.get("title", "")
             body = issue.get("body", "") or ""
-            # Use issue URL as canonical for dedup
-            u = title if title.startswith("http") else issue.get("html_url", "")
-            h = url_hash(u)
+            resource_url, notes = _parse_inbox_body(body)
+
+            # Fall back to title if it is itself a bare URL
+            if not resource_url and title.startswith("http"):
+                resource_url = title
+
+            # Canonical URL for dedup: prefer the resource URL, else the issue page
+            canonical = resource_url if resource_url else issue.get("html_url", "")
+            h = url_hash(canonical)
             if is_seen(db, h):
                 continue
             items.append({
@@ -418,12 +456,12 @@ def collect_inbox_issues(db) -> list:
                 "source_type": "inbox",
                 "category": "Research",
                 "title": title,
-                "url": u,
+                "url": canonical,
                 "content": None,
                 "published": issue.get("created_at", ""),
                 "metadata": {
                     "issue_number": issue.get("number"),
-                    "user_notes": body,
+                    "user_notes": notes,
                 },
             })
     except Exception as e:
