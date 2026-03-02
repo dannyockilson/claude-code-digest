@@ -1,5 +1,7 @@
 # Claude Code Intelligence Digest
 
+**[https://dannyockilson.github.io/claude-code-digest](https://dannyockilson.github.io/claude-code-digest)**
+
 Automated weekly digest of Claude Code ecosystem updates, community tools, and research items. Runs entirely on GitHub Actions + Claude API.
 
 ## How It Works
