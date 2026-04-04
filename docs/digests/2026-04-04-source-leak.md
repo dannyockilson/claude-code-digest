@@ -28,13 +28,15 @@ On March 31, 2026, Anthropic accidentally shipped the full TypeScript source of 
 
 The leak was a packaging mistake, not an intrusion. Claude Code v2.1.88 was published to npm with a **59.7 MB JavaScript source map** (`.map` file) inadvertently bundled alongside the compiled binary. Source maps exist to translate minified production code back to original source lines—useful for debugging, catastrophic when shipped publicly.
 
-The root cause: Claude Code uses [Bun](https://bun.sh/) as its runtime, which generates source maps by default. The team's `.npmignore` didn't exclude the `.map` file. The map referenced unobfuscated TypeScript sources sitting in Anthropic's public Cloudflare R2 storage bucket—meaning anyone who noticed the reference could download a complete snapshot of the codebase.
+The root cause: Claude Code uses [Bun](https://bun.sh/) as its runtime, which generates source maps by default. The team's `.npmignore` didn't exclude the `.map` file. The map referenced unobfuscated TypeScript sources sitting in Anthropic's public Cloudflare R2 storage bucket—meaning anyone who noticed the reference could download a complete snapshot of the codebase. A Bun bug (`oven-sh/bun#28001`, filed March 11) that permitted source maps in production builds was already open but hadn't been factored into the release checklist.
 
 Security researcher Chaofan Shou spotted it first and posted on X. That post reached **28.8 million views**. Within hours the package was pulled from npm, but not before mirror repositories spread across GitHub.
 
 This was actually Anthropic's **third disclosure event in six weeks**: an early source map exposure in February 2025 was patched within hours; a CMS misconfiguration on March 26 leaked internal marketing drafts including details of the unreleased Capybara/Mythos model; and then the npm incident on March 31.
 
 **Anthropic's official statement:** *"This was a release packaging issue caused by human error, not a security breach. No sensitive customer data or credentials were involved or exposed. We're rolling out measures to prevent this from happening again."*
+
+Boris Cherny, Anthropic's head of Claude Code, confirmed it was a "plain developer error" and added a notable aside: *"100% of my contributions to Claude Code were written by Claude Code."* Anthropic subsequently recommended the [native installer](https://code.claude.com) (standalone binary) as the preferred install path precisely because it bypasses the npm dependency chain.
 
 ---
 
@@ -50,6 +52,16 @@ The exposed archive contained approximately **1,900 TypeScript files and 512,000
 - `coordinator/`, `voice/`, `memdir/`, `buddy/` — feature-flagged unreleased systems
 
 What it did **not** contain: model weights, training data, training pipelines, API keys, customer data, or anything touching the underlying AI infrastructure. The leak is a sophisticated CLI wrapper, not the intelligence behind it.
+
+The codebase uses **React via the [Ink](https://github.com/vadimdemedes/ink) library** for terminal rendering—a browser-framework running in a shell. Internal model codenames are now also fully mapped:
+
+| Codename | Maps to |
+|---|---|
+| Tengu | Claude Code (internal project name) |
+| Capybara | New model family, v8, 1M context, "fast mode" |
+| Fennec | Opus 4.6 |
+| Numbat | Unreleased model in testing |
+| Penguin Mode | Fast Mode |
 
 ---
 
@@ -91,10 +103,10 @@ Two mechanisms exist specifically to make Claude Code's API traffic useless for 
 Behind feature flags `PROACTIVE` and `KAIROS` sits an unreleased autonomous mode that represents a significant architectural departure. KAIROS:
 
 - Runs 24/7 without waiting for user prompts
-- Receives periodic **heartbeat queries**: *"anything worth doing right now?"*
-- Has exclusive access to tools unavailable in normal mode: push notifications, file delivery, GitHub PR subscriptions
-- Maintains an **append-only observation log**—it cannot rewrite or delete history
-- Consolidates memory nightly via autoDream
+- Receives periodic **heartbeat queries**: *"anything worth doing right now?"* — with a 15-second blocking budget per decision cycle and 5-minute cron refresh intervals
+- Has exclusive access to tools unavailable in normal mode: push notifications, file delivery, GitHub PR subscriptions, and GitHub webhook subscriptions for autonomous monitoring
+- Maintains an **append-only daily observation log**—it cannot rewrite or delete its own history
+- Consolidates memory nightly via `autoDream`, which triggers when: 24+ hours since last cycle, 5+ sessions completed, and no concurrent dream process is running; four phases: Orient → Gather Signal → Consolidate → Prune/Index
 
 Internal notes in the source suggest an April–May 2026 rollout window, though nothing has been confirmed.
 
@@ -133,23 +145,27 @@ Three findings from the reverse-engineering community warrant attention from eng
 
 **Dual HTTP clients.** Both Axios and `fetch` are present, suggesting the codebase accumulated dependencies from multiple authors without a consolidation pass. 74 npm dependencies total.
 
+**Orphaned tool calls.** One researcher's analysis of 1,571 real sessions found **5.4% of all tool calls were orphaned**—executed but results never returned—with a 16.3% overall API failure rate across 3,539 requests in a single session. The failure modes were previously invisible to users.
+
+**Attestation bug.** A `cch=00000` placeholder is replaced with a computed hash by Bun's native HTTP layer (written in Zig, not JavaScript) mid-request to prove genuine binary origin. When users discuss billing-related topics, this hash replacement corrupts conversation content, breaks prompt caching, and can cause **10–20× token overconsumption**.
+
 ---
 
 ## The Ecosystem Response
 
 ### claw-code: GitHub's Fastest-Growing Repository
 
-Within 24 hours of the leak, `instructkr/claw-code` (since transferred to `ultraworkers/claw-code`) emerged as a **clean-room Rust rewrite** of Claude Code's architecture. It reached **100,000 stars in under one day**—the fastest any repository has hit that milestone in GitHub's history. The project has its own Discord and website at claw-code.codes.
-
-Separately, a Python rewrite targeting API parity also appeared and is trending toward 100K stars on its own trajectory.
+Developer **Sigrid Jin** (`@instructkr`, a Korean developer who had attended Claude Code's first birthday party in February) published a clean-room **Python rewrite** overnight, using `oh-my-codex` as the orchestration layer. The legal defense: architectural study, not code copy. `instructkr/claw-code` (later transferred to `ultraworkers/claw-code`) hit **50,000 stars in roughly two hours** and **100,000+ stars by April 2**—the fastest any repository in GitHub's history has crossed that threshold—with 98,000+ forks. A Rust port followed. Website: [claw-code.codes](https://claw-code.codes).
 
 ### The Mirror and Forks
 
-The primary mirror `leaked-claude-code/leaked-claude-code` accumulated **41,500+ forks** before GitHub actioned takedown requests. Multiple analysis repositories also appeared:
+The primary mirror `leaked-claude-code/leaked-claude-code` accumulated **41,500+ forks** before GitHub actioned takedown requests. Other notable repositories:
 
-- **[Yuyz0112/claude-code-reverse](https://github.com/Yuyz0112/claude-code-reverse)** — visualization tool for Claude Code's LLM interactions, predating the leak
-- **ccleaks.com** — archived and documented the exposed code
-- Statistical deep-dives from Dr. Randal S. Olson and Engineers Codex
+- **[Yuyz0112/claude-code-reverse](https://github.com/Yuyz0112/claude-code-reverse)** — LLM interaction visualization, predated the leak
+- **[ComeOnOliver/claude-code-analysis](https://github.com/ComeOnOliver/claude-code-analysis)** — comprehensive architecture breakdown
+- **[Kuberwastaken/claurst](https://github.com/Kuberwastaken/claurst)** — Rust rewrite with annotated discoveries
+- **ccleaks.com** — archival and documentation of the exposed code
+- Statistical breakdowns from Dr. Randal S. Olson and Engineers Codex
 
 ### Hacker News
 
@@ -157,7 +173,7 @@ Seven distinct HN threads in four days, covering: the initial discovery ([475845
 
 ### Anthropic's DMCA Campaign
 
-On April 1, Anthropic issued mass copyright takedown requests targeting **thousands of GitHub repositories**. By April 3, the company had retracted most of them, characterizing the sweep as "an accident." TechRadar's headline: *"The irony is rich."* The code continues to circulate.
+On April 1, Anthropic issued a DMCA takedown that GitHub executed against approximately **8,100 repositories**—including legitimate forks of Anthropic's own public repos, personal projects, and repos with no leaked code at all. Boris Cherny subsequently characterized the sweep as "an accident" and retracted it, narrowing the notice to one repository and 96 direct forks. The filed notice is public: [github.com/github/dmca/.../2026-03-31-anthropic.md](https://github.com/github/dmca/blob/master/2026/03/2026-03-31-anthropic.md). TechRadar's headline: *"The irony is rich."* The code continues to circulate regardless.
 
 ---
 
@@ -168,6 +184,8 @@ The leak created an attack surface that was exploited almost immediately:
 **Supply chain attack (critical — rotate credentials now):** Users who installed or updated Claude Code via npm in the window **March 31, 00:21–03:29 UTC** may have received a trojanized HTTP client containing a cross-platform remote access trojan. Downgrade immediately if you were in that window and rotate all credentials that were live in that environment.
 
 **Malware campaigns:** BleepingComputer documented fake GitHub repositories deploying **Vidar Stealer** and **GhostSocks** malware through trojanized "Claude Code leak" packages. Five typosquatting npm packages mimicking internal dependency names were also flagged.
+
+**Post-leak CVEs:** Two vulnerabilities were disclosed within days of the leak. **CVE-2026-21852** (Adversa AI): malicious repositories could exfiltrate API keys before the trust prompt appeared. **CVE-2025-59536** (Check Point Research): presenting Claude Code with a command composed of more than 50 subcommands causes it to skip security analysis for anything past the 50th, simply asking the user to confirm—bypassing the per-command LLM safety check entirely.
 
 **Targeted fuzzing risk:** Zscaler ThreatLabz noted that the four-stage context management pipeline—now fully documented—gives attackers a precise map for crafting prompt injection payloads targeting the compaction and memory systems specifically.
 
@@ -190,11 +208,15 @@ The Undercover Mode debate (should AI commit messages suppress AI attribution?) 
 
 ## Further Reading
 
-- **[The Claude Code Source Leak: fake tools, frustration regexes, undercover mode](https://alex000kim.com/posts/2026-03-31-claude-code-source-leak/)** — Alex Kim, the sharpest single-article technical summary
+- **[The Claude Code Source Leak: fake tools, frustration regexes, undercover mode](https://alex000kim.com/posts/2026-03-31-claude-code-source-leak/)** — Alex Kim; the sharpest single-article technical summary
 - **[Diving into Claude Code's Source Code Leak](https://read.engineerscodex.com/p/diving-into-claude-codes-source-code)** — Engineers Codex deep dive
 - **[The Claude Code leak in four charts](https://www.randalolson.com/2026/04/02/claude-code-leak-four-charts/)** — Dr. Randal S. Olson, statistical breakdown
 - **[We Reverse-Engineered 12 Versions of Claude Code. Then It Leaked.](https://dev.to/kolkov/we-reverse-engineered-12-versions-of-claude-code-then-it-leaked-its-own-source-code-pij)** — pre-leak analysis that predicted several findings
+- **[Claude Code Leaked Source: BUDDY, KAIROS & Every Hidden Feature Inside](https://wavespeed.ai/blog/posts/claude-code-leaked-source-hidden-features/)** — WaveSpeedAI comprehensive features catalog
+- **[AINews: The Claude Code Source Leak](https://www.latent.space/p/ainews-the-claude-code-source-leak)** — Latent Space roundup
 - **[Anthropic accidentally exposes Claude Code source code](https://www.theregister.com/2026/03/31/anthropic_claude_code_source_code/)** — The Register's news coverage
 - **[Claude Code leak used to push infostealer malware](https://www.bleepingcomputer.com/news/security/claude-code-leak-used-to-push-infostealer-malware-on-github/)** — BleepingComputer on the malware campaigns
+- **[RCE and API Token Exfiltration — CVE-2025-59536](https://research.checkpoint.com/2026/rce-and-api-token-exfiltration-through-claude-code-project-files-cve-2025-59536/)** — Check Point Research
 - **[claw-code: fastest-growing GitHub repo](https://cybernews.com/tech/claude-code-leak-spawns-fastest-github-repo/)** — Cybernews on the community rewrite
 - **[Anthropic took down thousands of GitHub repos](https://techcrunch.com/2026/04/01/anthropic-took-down-thousands-of-github-repos-trying-to-yank-its-leaked-source-code-a-move-the-company-says-was-an-accident/)** — TechCrunch on the DMCA campaign
+- **[GitHub DMCA notice — 2026-03-31-anthropic.md](https://github.com/github/dmca/blob/master/2026/03/2026-03-31-anthropic.md)** — the filed takedown request
