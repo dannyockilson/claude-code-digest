@@ -8,7 +8,7 @@ special_edition: true
 # Claude Code Weekly Intelligence Digest
 ## Special Edition: The Claude Code Source Leak
 
-*Published 4 Apr 2026 — standalone deep dive. Normal weekly digest resumes Sunday 6 Apr.*
+*Published 4 Apr 2026 — standalone deep dive. Normal weekly digest resumes Sunday 5 Apr.*
 
 ---
 
