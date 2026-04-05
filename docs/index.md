@@ -9,14 +9,12 @@ Automated weekly digest of Claude Code ecosystem updates, community tools, and r
 
 ## Latest Digest
 
-**[29 Mar 2026](digests/2026-03-29)** — View the latest digest.
-
-## Special Edition
-
-**[4 Apr 2026 — The Claude Code Source Leak: A Deep Dive](digests/2026-04-04-source-leak)** — Standalone meta-analysis of the npm source map incident: what leaked, what it reveals about the architecture, KAIROS/BUDDY/ULTRAPLAN, the DMCA campaign, claw-code, and the malware wave.
+**[05 Apr 2026](digests/2026-04-05)** — View the latest digest.
 
 ## Archive
 
+- [05 Apr 2026](digests/2026-04-05)
+- [2026-04-04-source-leak](digests/2026-04-04-source-leak)
 - [29 Mar 2026](digests/2026-03-29)
 - [22 Mar 2026](digests/2026-03-22)
 - [15 Mar 2026](digests/2026-03-15)
