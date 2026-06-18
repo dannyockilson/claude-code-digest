@@ -1,0 +1,82 @@
+---
+---
+
+@import "minima";
+
+.nav-dropdown {
+  display: inline-block;
+  position: relative;
+}
+
+.nav-dropdown-toggle {
+  background: none;
+  border: none;
+  font-family: inherit;
+  font-size: inherit;
+  cursor: pointer;
+  padding: 0;
+  color: #111111;
+
+  &:hover {
+    color: #2a7ae2;
+  }
+}
+
+.nav-dropdown-menu {
+  display: none;
+  position: absolute;
+  right: 0;
+  top: 100%;
+  background: #fdfdfd;
+  border: 1px solid #e8e8e8;
+  border-radius: 4px;
+  padding: 6px 0;
+  min-width: 220px;
+  z-index: 100;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.nav-dropdown:hover .nav-dropdown-menu,
+.nav-dropdown:focus-within .nav-dropdown-menu {
+  display: block;
+}
+
+.nav-dropdown-item {
+  display: block;
+  padding: 7px 16px;
+  color: #111111;
+  text-decoration: none;
+  font-size: 16px;
+  white-space: nowrap;
+
+  &:hover {
+    background: #f0f0f0;
+    color: #2a7ae2;
+  }
+}
+
+// On mobile the nav is shown in vertical stack — flatten dropdown into the flow
+@media screen and (max-width: 600px) {
+  .nav-dropdown {
+    display: block;
+  }
+
+  .nav-dropdown-toggle {
+    display: block;
+    padding: 5px 0;
+    font-weight: bold;
+  }
+
+  .nav-dropdown-menu {
+    display: block;
+    position: static;
+    border: none;
+    box-shadow: none;
+    padding: 0 0 0 12px;
+  }
+
+  .nav-dropdown-item {
+    font-size: 16px;
+    padding: 4px 0;
+  }
+}
