@@ -2,5 +2,9 @@ title: Claude Code Intelligence Digest
 description: Automated weekly digest of Claude Code ecosystem updates
 theme: minima
 baseurl: /claude-code-digest
+# Only these pages appear in the header nav; digest pages live under /archive
+header_pages:
+  - index.md
+  - archive.md
 kramdown:
   toc_levels: "2"
