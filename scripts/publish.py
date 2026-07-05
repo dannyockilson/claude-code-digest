@@ -71,21 +71,28 @@ items: {digest['items_included']}
     return out_path
 
 
+RECENT_DIGESTS_ON_INDEX = 3
+
+
 def update_index(digest_date: str) -> None:
-    """Rewrite docs/index.md with latest digest and archive list."""
+    """Rewrite docs/index.md with the latest digest and a short recent list.
+
+    Older digests are not listed here; docs/archive.md renders the full
+    list at build time via Liquid, so it needs no regeneration.
+    """
     dt = datetime.strptime(digest_date, "%Y-%m-%d")
 
     # Collect all existing digest files
     digest_files = sorted(DIGESTS_DIR.glob("*.md"), reverse=True)
-    archive_lines = []
-    for f in digest_files:
+    recent_lines = []
+    for f in digest_files[:RECENT_DIGESTS_ON_INDEX]:
         d = f.stem  # YYYY-MM-DD
         try:
             fdt = datetime.strptime(d, "%Y-%m-%d")
             label = fdt.strftime("%d %b %Y")
         except ValueError:
             label = d
-        archive_lines.append(f"- [{label}](digests/{d})")
+        recent_lines.append(f"- [{label}](digests/{d})")
 
     index_content = f"""---
 layout: default
@@ -100,14 +107,16 @@ Automated weekly digest of Claude Code ecosystem updates, community tools, and r
 
 **[{dt.strftime('%d %b %Y')}](digests/{digest_date})** — View the latest digest.
 
-## Archive
+## Recent
 
-{chr(10).join(archive_lines) if archive_lines else '_No digests yet._'}
+{chr(10).join(recent_lines) if recent_lines else '_No digests yet._'}
+
+[Browse the full archive →](archive)
 """
 
     index_path = DOCS_DIR / "index.md"
     index_path.write_text(index_content, encoding="utf-8")
-    logger.info("Updated index.md with %d archive entries", len(archive_lines))
+    logger.info("Updated index.md with %d recent entries", len(recent_lines))
 
 
 def close_inbox_issues(items: list, digest_date: str) -> None:

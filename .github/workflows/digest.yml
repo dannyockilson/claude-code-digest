@@ -63,4 +63,7 @@ jobs:
             --body "Weekly digest for $(date +%Y-%m-%d). Review and merge to publish to GitHub Pages." \
             --base primary \
             --head "$BRANCH"
-          gh pr merge "$BRANCH" --auto --merge
+          # --auto only works when merge is blocked (e.g. required checks pending).
+          # With no branch protection the PR is immediately "clean" and GitHub
+          # rejects enabling auto-merge, so fall back to merging directly.
+          gh pr merge "$BRANCH" --auto --merge || gh pr merge "$BRANCH" --merge
