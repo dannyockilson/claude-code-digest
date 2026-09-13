@@ -9,12 +9,12 @@ Automated weekly digest of Claude Code ecosystem updates, community tools, and r
 
 ## Latest Digest
 
-**[06 Sep 2026](digests/2026-09-06)** — View the latest digest.
+**[13 Sep 2026](digests/2026-09-13)** — View the latest digest.
 
 ## Recent
 
+- [13 Sep 2026](digests/2026-09-13)
 - [06 Sep 2026](digests/2026-09-06)
 - [30 Aug 2026](digests/2026-08-30)
-- [23 Aug 2026](digests/2026-08-23)
 
 [Browse the full archive →](archive)
